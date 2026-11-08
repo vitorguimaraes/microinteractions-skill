@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Microinterações — Boas práticas em HTML + CSS</title>
+<style>
+/* =========================================================
+   TOKENS — troque pelos tokens da skill de design do Sebrae/CE.
+   Fontes: Figtree (títulos) e Lato (texto). Os arquivos não estão
+   embutidos; sem eles o navegador usa a fonte do sistema.
+   ========================================================= */
+:root{
+  --azul:#0A5CAD; --azul-esc:#07427D; --azul-cl:#E6F0FA; --foco:#7FB2E5;
+  --verde:#1E8A55; --verde-cl:#E4F5EC; --verm:#C62F3B; --verm-cl:#FBE9EB;
+  --amar:#9A6200; --amar-cl:#FFF4DC; --roxo:#6B4FBB;
+  --tx:#1B2430; --tx2:#566170; --bd:#D5DCE6; --bg:#F5F7FA; --card:#fff;
+  --raio:12px; --raio-s:8px;
+  /* motion tokens (prática: duração curta, saída mais rápida que entrada) */
+  --dur-1:120ms; --dur-2:200ms; --dur-3:320ms;
+  --ease-out:cubic-bezier(.2,.7,.2,1); --ease-in:cubic-bezier(.4,0,1,1);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Lato,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
+h1,h2,h3,.btn,.id,.tag,nav a{font-family:Figtree,Lato,system-ui,sans-serif}
+.ic{width:1.15em;height:1.15em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.2em;flex:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;opacity:0}
+code,kbd{font-family:ui-monospace,Consolas,monospace;font-size:.88em}
+kbd{background:#fff;border:1px solid var(--bd);border-bottom-width:2px;border-radius:5px;padding:0 .4em}
+pre{margin:0;background:#101826;color:#E6EDF7;padding:.8rem 1rem;border-radius:var(--raio-s);overflow:auto;font-size:.8rem;line-height:1.45}
+
+/* ---------- estrutura da página ---------- */
+header.top{background:var(--azul);color:#fff;padding:2.2rem 1.25rem 1.6rem}
+header.top .in,main,nav .in{max-width:1180px;margin:0 auto}
+header.top h1{margin:0 0 .4rem;font-size:clamp(1.6rem,3vw,2.2rem)}
+header.top p{margin:.2rem 0;max-width:70ch;opacity:.95}
+nav.sticky{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--bd)}
+nav .in{display:flex;gap:.25rem;overflow:auto;padding:.4rem 1.25rem}
+nav a{white-space:nowrap;text-decoration:none;color:var(--tx);padding:.45rem .8rem;border-radius:999px;font-weight:600;font-size:.9rem;transition:background-color var(--dur-1) var(--ease-out)}
+nav a:hover{background:var(--azul-cl)}
+nav a:focus-visible{outline:3px solid var(--foco);outline-offset:1px}
+main{padding:1.5rem 1.25rem 4rem}
+section{margin-top:2.5rem;scroll-margin-top:4rem}
+section>h2{font-size:1.5rem;margin:0 0 .2rem;color:var(--azul-esc)}
+.lead{color:var(--tx2);margin:0 0 1rem;max-width:80ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,520px),1fr));gap:1rem;align-items:start}
+.legend{display:grid;gap:.5rem;background:#fff;border:1px solid var(--bd);border-radius:var(--raio);padding:1rem 1.2rem;margin-top:1.25rem}
+.legend b{color:var(--azul-esc)}
+
+/* ---------- cartão de prática ---------- */
+.p{background:var(--card);border:1px solid var(--bd);border-radius:var(--raio);overflow:hidden;display:flex;flex-direction:column}
+.p.wide{grid-column:1/-1}
+.p>header{display:flex;align-items:center;gap:.6rem;padding:.75rem 1rem;border-bottom:1px solid var(--bd)}
+.p h3{margin:0;font-size:1.02rem;flex:1}
+.id{font-size:.75rem;font-weight:800;background:var(--azul-cl);color:var(--azul-esc);padding:.15rem .5rem;border-radius:6px}
+.tag{font-size:.72rem;font-weight:700;color:#fff;padding:.15rem .55rem;border-radius:999px;background:var(--azul)}
+.t-r{background:var(--roxo)} .t-f{background:var(--verde)} .t-l{background:var(--amar)} .t-p{background:var(--tx2)}
+.demo{padding:1.1rem 1rem;background:#FBFCFE;display:flex;flex-wrap:wrap;gap:.8rem;align-items:center;min-height:90px}
+.demo.col{flex-direction:column;align-items:stretch}
+.spec{margin:0;padding:.85rem 1rem 1rem;border-top:1px solid var(--bd);display:grid;grid-template-columns:auto 1fr;gap:.3rem .8rem;font-size:.9rem}
+.spec dt{font-weight:800;color:var(--azul-esc);font-family:Figtree,Lato,sans-serif}
+.spec dd{margin:0;color:var(--tx)}
+.spec dt.ev{color:var(--verm)}
+.note{font-size:.82rem;color:var(--tx2)}
+.row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+.sub{font-size:.75rem;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.04em;width:100%;margin:0}
+.tbl{width:100%;border-collapse:collapse;font-size:.88rem;background:#fff}
+.tbl th,.tbl td{border:1px solid var(--bd);padding:.4rem .6rem;text-align:left;vertical-align:top}
+.tbl th{background:var(--azul-cl);color:var(--azul-esc)}
+.bad{color:var(--verm)} .good{color:var(--verde);font-weight:700}
+
+/* ---------- botão base (gatilho) ---------- */
+.btn{display:inline-flex;align-items:center;gap:.45rem;padding:.6rem 1rem;border:2px solid var(--azul);border-radius:var(--raio-s);background:var(--azul);color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;text-decoration:none;
+  transition:transform var(--dur-1) var(--ease-out),background-color var(--dur-1) var(--ease-out),box-shadow var(--dur-1) var(--ease-out)}
+.btn:hover,.btn.is-hover{background:var(--azul-esc);border-color:var(--azul-esc)}
+.btn:focus-visible,.btn.is-focus{outline:3px solid var(--foco);outline-offset:2px}
+.btn:active,.btn.is-active{transform:scale(.97);box-shadow:inset 0 2px 6px rgba(0,0,0,.25)}
+.btn.sec{background:#fff;color:var(--azul)} .btn.sec:hover,.btn.sec.is-hover{background:var(--azul-cl);border-color:var(--azul)}
+.btn.ghost{background:transparent;color:var(--azul);border-color:transparent;text-decoration:underline}
+.btn.danger{background:var(--verm);border-color:var(--verm)}
+.btn[aria-disabled="true"]{background:#E3E8EF;border-color:#E3E8EF;color:#667386;cursor:not-allowed;pointer-events:auto;transform:none;box-shadow:none}
+.btn.loading{pointer-events:none;opacity:.92}
+.spin{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- controles ---------- */
+.sw{display:inline-flex;align-items:center;gap:.6rem;cursor:pointer;font-weight:600}
+.sw .trk{width:46px;height:26px;border-radius:999px;background:#9AA6B5;position:relative;transition:background-color var(--dur-2) var(--ease-out);flex:none}
+.sw .trk::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform var(--dur-2) var(--ease-out)}
+.sw input:checked+.trk{background:var(--verde)} .sw input:checked+.trk::after{transform:translateX(20px)}
+.sw input:focus-visible+.trk{outline:3px solid var(--foco);outline-offset:2px}
+.sw .on{display:none} .sw input:checked~.on{display:inline} .sw input:checked~.off{display:none}
+.seg{display:inline-flex;border:2px solid var(--azul);border-radius:var(--raio-s);overflow:hidden}
+.seg label{cursor:pointer}
+.seg span{display:block;padding:.4rem .9rem;font-weight:700;color:var(--azul);transition:background-color var(--dur-1)}
+.seg input:checked+span{background:var(--azul);color:#fff}
+.seg input:focus-visible+span{outline:3px solid var(--foco);outline-offset:-3px}
+input[type=range]{accent-color:var(--azul);width:180px}
+.fld{display:grid;gap:.25rem;font-weight:700;font-size:.88rem}
+.fld input,.fld select{font:inherit;font-weight:400;padding:.5rem .6rem;border:2px solid var(--bd);border-radius:var(--raio-s);background:#fff;min-width:200px}
+.fld input:focus-visible,.fld select:focus-visible{outline:3px solid var(--foco);border-color:var(--azul)}
+.chip{display:inline-flex;align-items:center;gap:.3rem;font-size:.78rem;font-weight:700;border-radius:999px;padding:.12rem .6rem;background:var(--azul-cl);color:var(--azul-esc)}
+.box{border:1px solid var(--bd);border-radius:var(--raio-s);background:#fff;padding:.7rem .9rem}
+
+/* ---------- G2 dado à frente ---------- */
+.bell{position:relative;width:44px;height:44px;border-radius:50%;border:2px solid var(--bd);background:#fff;display:grid;place-items:center;cursor:pointer;color:var(--tx)}
+.bell .badge{position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;border-radius:10px;background:var(--verm);color:#fff;font:800 .72rem Figtree,sans-serif;display:grid;place-items:center;padding:0 5px}
+.dl{position:relative;overflow:hidden;min-width:210px;justify-content:center}
+.dl::before{content:"";position:absolute;inset:0;background:rgba(255,255,255,.28);transform-origin:left;transform:scaleX(.64)}
+.dl>*{position:relative}
+
+/* ---------- G3 descobribilidade ---------- */
+.disc{display:grid;gap:.35rem;width:100%}
+.disc div{display:grid;grid-template-columns:150px 1fr;gap:.6rem;align-items:center;font-size:.85rem}
+.disc i{display:block;height:14px;border-radius:7px;background:linear-gradient(90deg,var(--azul),var(--foco))}
+.pulse{animation:pulse 1.4s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(10,92,173,.55)}70%{box-shadow:0 0 0 12px rgba(10,92,173,0)}100%{box-shadow:0 0 0 0 rgba(10,92,173,0)}}
+
+/* ---------- G8 gatilho do sistema ---------- */
+.sysb{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;width:100%;background:var(--azul-cl);border:1px solid var(--foco);border-radius:var(--raio-s);padding:.6rem .8rem}
+.sysb .x{margin-left:auto;cursor:pointer;color:var(--azul-esc);font-weight:700;display:inline-flex;gap:.3rem;align-items:center;font-size:.85rem}
+#dis1:checked~.sysb{display:none}
+#dis1:checked~.undo{display:inline-flex}
+.undo{display:none}
+
+/* ---------- G9 hover antecipa ---------- */
+.fold{position:relative;display:inline-flex;align-items:center;gap:.5rem;padding:.6rem .9rem;border:2px solid var(--bd);border-radius:var(--raio-s);background:#fff;font-weight:700;cursor:pointer}
+.fold:hover,.fold:focus-visible{border-color:var(--azul)}
+.fold .tip{position:absolute;left:0;top:calc(100% + 6px);white-space:nowrap;background:#101826;color:#fff;font-weight:400;font-size:.8rem;padding:.35rem .6rem;border-radius:6px;opacity:0;transform:translateY(-4px);pointer-events:none;transition:opacity var(--dur-1) var(--ease-out),transform var(--dur-1) var(--ease-out)}
+.fold:hover .tip,.fold:focus-visible .tip{opacity:1;transform:none}
+
+/* ---------- R1 lógica ---------- */
+.flow{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;font-size:.85rem}
+.flow .n{border:2px solid var(--bd);border-radius:var(--raio-s);padding:.3rem .6rem;background:#fff;font-weight:700}
+.flow .d{border:2px dashed var(--roxo);border-radius:999px;padding:.3rem .8rem;background:#F3EFFC;font-weight:700;color:var(--roxo)}
+.cartdemo .a,.cartdemo .b{display:none}
+.cartdemo:has(#bought:checked) .b{display:inline}
+.cartdemo:not(:has(#bought:checked)) .a{display:inline}
+
+/* ---------- R2 estados do objeto ---------- */
+.item{display:flex;align-items:center;gap:.6rem;background:#fff;border:2px solid var(--bd);border-radius:var(--raio-s);padding:.55rem .8rem;width:260px;transition:transform var(--dur-1) var(--ease-out),box-shadow var(--dur-1) var(--ease-out),border-color var(--dur-1)}
+.item .grip{color:var(--tx2);cursor:grab}
+.item:hover{border-color:var(--azul)}
+.item:active{transform:scale(1.03) rotate(-.6deg);box-shadow:0 10px 22px rgba(16,24,38,.22);border-color:var(--azul)}
+.item:active .grip{cursor:grabbing}
+.states3{display:flex;gap:.5rem;flex-wrap:wrap;width:100%}
+.states3 .chip{background:#F3EFFC;color:var(--roxo)}
+
+/* ---------- R3 padrões ---------- */
+.sugg{font-size:.76rem;color:var(--verde);font-weight:700;display:inline-flex;gap:.25rem;align-items:center}
+
+/* ---------- R8 poka-yoke ---------- */
+.mail{display:grid;gap:.5rem;width:100%}
+.mail .warn{display:none;align-items:flex-start;gap:.5rem;background:var(--amar-cl);border:1px solid #E6C27A;color:#5E3C00;border-radius:var(--raio-s);padding:.5rem .7rem;font-size:.88rem}
+.mail:has(#m-ref:checked):not(:has(#m-file:checked)) .warn{display:flex}
+
+/* ---------- R9 validação ---------- */
+.val .msg{display:none;color:var(--verm);font-size:.82rem;font-weight:700}
+.val input:not(:focus):not(:placeholder-shown):invalid{border-color:var(--verm)}
+.val input:not(:focus):not(:placeholder-shown):invalid~.msg{display:flex;gap:.3rem;align-items:center}
+
+/* ---------- F2 copiar ---------- */
+.copy{display:inline-grid;grid-template-areas:"i t";align-items:center;gap:.45rem;border:2px solid var(--azul);background:var(--azul);color:#fff;font:700 .95rem Figtree,sans-serif;padding:.55rem 1rem;border-radius:var(--raio-s);cursor:pointer;min-width:132px;justify-content:center;transition:background-color var(--dur-1) var(--ease-out)}
+.copy .ci,.copy .co{grid-area:i;display:grid;place-items:center}
+.copy .ti,.copy .to{grid-area:t}
+.copy .co,.copy .to{opacity:0}
+.copy:hover{background:var(--azul-esc)}
+.copy:focus-visible{outline:3px solid var(--foco);outline-offset:2px}
+.copy:focus{animation:cpBtn 2s var(--ease-out) both}
+.copy:focus .ci,.copy:focus .ti{animation:cpOut 2s both}
+.copy:focus .co,.copy:focus .to{animation:cpIn 2s both}
+@keyframes cpBtn{0%{transform:scale(1)}8%{transform:scale(1.1);background:var(--verde);border-color:var(--verde)}16%{transform:scale(1.04)}88%{transform:scale(1.04);background:var(--verde);border-color:var(--verde)}100%{transform:scale(1)}}
+@keyframes cpOut{0%{opacity:1}6%,92%{opacity:0}100%{opacity:1}}
+@keyframes cpIn{0%{opacity:0}6%,92%{opacity:1}100%{opacity:0}}
+.copy .co svg{animation:none}
+.copy:focus .co svg{animation:pop .35s var(--ease-out) both}
+@keyframes pop{0%{transform:scale(.4)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+
+/* ---------- F3 proporcional ---------- */
+.tier{display:grid;grid-template-columns:90px 1fr;gap:.6rem;align-items:center;width:100%;font-size:.85rem}
+.tier>b{color:var(--tx2)}
+.toast{display:inline-flex;align-items:center;gap:.5rem;background:#101826;color:#fff;border-radius:var(--raio-s);padding:.5rem .8rem;font-size:.88rem;box-shadow:0 6px 16px rgba(16,24,38,.25)}
+.toast .ic{color:#6EE3A4}
+.blk{display:flex;gap:.6rem;align-items:flex-start;border:2px solid var(--verm);background:var(--verm-cl);border-radius:var(--raio-s);padding:.6rem .8rem}
+
+/* ---------- F5 negligenciado ---------- */
+.cur{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:.5rem;width:100%}
+.cur div{border:2px dashed var(--bd);border-radius:var(--raio-s);padding:.6rem;text-align:center;font-size:.82rem;background:#fff}
+.cur div:hover{border-color:var(--azul);background:var(--azul-cl)}
+
+/* ---------- F6/F7 progresso / skeleton ---------- */
+.bar{height:10px;border-radius:5px;background:#E3E8EF;overflow:hidden;width:100%}
+.bar>span{display:block;height:100%;background:var(--azul);border-radius:5px}
+.bar.det>span{width:0;animation:fillbar 8s linear infinite}
+@keyframes fillbar{to{width:100%}}
+.bar.ind>span{width:35%;animation:indet 1.3s var(--ease-out) infinite}
+@keyframes indet{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}
+.sk{border-radius:6px;background:linear-gradient(90deg,#E6EBF2 25%,#F4F7FB 37%,#E6EBF2 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite}
+@keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
+.skcard{display:flex;gap:.7rem;width:100%;align-items:center}
+.skcard .av{width:44px;height:44px;border-radius:50%}
+
+/* ---------- F8 painel com direção coerente ---------- */
+.pan{position:relative;width:100%;height:170px;overflow:hidden;border:1px solid var(--bd);border-radius:var(--raio-s);background:#fff}
+.pan .side{position:absolute;inset:0 auto 0 0;width:58%;background:var(--azul-cl);border-right:1px solid var(--foco);padding:.8rem;transform:translateX(-100%);
+  transition:transform 160ms var(--ease-in)}                 /* saída: mais curta, ease-in */
+#pn:checked~.side{transform:none;transition:transform 240ms var(--ease-out)}  /* entrada: ease-out */
+.pan .cnt{padding:.8rem;transition:transform 240ms var(--ease-out),opacity 240ms}
+#pn:checked~.cnt{transform:translateX(12%);opacity:.5}
+.pan label.btn{position:relative;z-index:2}
+
+/* ---------- F8/F9 duração e curva (anima transform: scaleX) ---------- */
+.dur{display:grid;gap:.45rem;width:100%}
+.dur .lane{background:#E3E8EF;border-radius:6px;height:26px;position:relative;font-size:.75rem;overflow:hidden}
+.dur .lane b{position:absolute;left:8px;top:4px;z-index:1;color:var(--tx)}
+.dur .lane i{position:absolute;inset:0;background:#8DBBE8;transform-origin:left;transform:scaleX(.06)}
+.dur:hover .lane i{transform:scaleX(1)}
+
+/* ---------- F11 reduced motion ---------- */
+.rm-on{display:none}
+@media (prefers-reduced-motion:reduce){.rm-on{display:inline}.rm-off{display:none}}
+
+/* ---------- F12 mensagens ---------- */
+.msgs{display:grid;gap:.5rem;width:100%}
+.m{display:flex;gap:.6rem;align-items:flex-start;border-radius:var(--raio-s);padding:.6rem .8rem;border:1px solid;font-size:.9rem}
+.m .btn{margin-left:auto;padding:.25rem .7rem;font-size:.82rem}
+.m.ok{background:var(--verde-cl);border-color:#9AD6B6;color:#0F5132}
+.m.er{background:var(--verm-cl);border-color:#EDA7AE;color:#7F1D27}
+.m.wr{background:var(--amar-cl);border-color:#E6C27A;color:#5E3C00}
+.m.in{background:var(--azul-cl);border-color:var(--foco);color:var(--azul-esc)}
+
+/* ---------- F13 limite ---------- */
+.meter{display:flex;align-items:center;gap:.6rem;width:100%;font-size:.85rem}
+.meter .bar{flex:1}
+.meter.full .bar>span{background:var(--amar)}
+
+/* ---------- F14 estado vazio ---------- */
+.empty{text-align:center;width:100%;padding:.8rem}
+.empty .ic{width:2rem;height:2rem;color:var(--tx2)}
+
+/* ---------- F16 personalidade ---------- */
+.rot{display:inline-grid;font-weight:700}
+.rot span{grid-area:1/1;opacity:0;animation:rot 6s infinite}
+.rot span:nth-child(2){animation-delay:2s}.rot span:nth-child(3){animation-delay:4s}
+@keyframes rot{0%{opacity:0;transform:translateY(5px)}6%,30%{opacity:1;transform:none}36%,100%{opacity:0}}
+
+/* ---------- L1 spring-loaded ---------- */
+.hold{position:relative;overflow:hidden;display:inline-grid;border:2px solid var(--verm);color:var(--verm);background:#fff;font:700 .95rem Figtree,sans-serif;padding:.6rem 1rem;border-radius:var(--raio-s);cursor:pointer;min-width:230px;user-select:none}
+.hold .fill{position:absolute;inset:0;background:var(--verm-cl);transform:scaleX(0);transform-origin:left;transition:transform .2s var(--ease-out)}
+.hold:active .fill{transform:scaleX(1);transition:transform 1.2s linear}
+.hold .l{position:relative;grid-area:1/1;display:flex;gap:.4rem;align-items:center;justify-content:center}
+.hold .l2{opacity:0}
+.hold:active .l1{animation:hOut 1.2s linear forwards}
+.hold:active .l2{animation:hIn 1.2s linear forwards}
+@keyframes hOut{0%,99%{opacity:1}100%{opacity:0}}
+@keyframes hIn{0%,99%{opacity:0}100%{opacity:1}}
+.hold:focus-visible{outline:3px solid var(--foco);outline-offset:2px}
+
+/* ---------- L2 one-off ---------- */
+.tools{display:grid;gap:.5rem;width:100%}
+.tools .tb{display:flex;gap:.4rem}
+.tools .tool{cursor:pointer;border:2px solid var(--bd);border-radius:var(--raio-s);padding:.35rem .8rem;font-weight:700;background:#fff}
+.tools input:checked+.tool{border-color:var(--azul);background:var(--azul-cl);color:var(--azul-esc)}
+.tools input:focus-visible+.tool{outline:3px solid var(--foco)}
+.tools .canvas{display:grid;place-items:center;height:84px;border:2px dashed var(--bd);border-radius:var(--raio-s);background:#fff;font-size:.88rem;cursor:default;text-align:center;padding:.5rem}
+.tools .canvas .s2{display:none}
+.tools:has(#t-stp:checked) .canvas{cursor:copy;border-color:var(--azul);background:var(--azul-cl)}
+.tools:has(#t-stp:checked) .canvas .s1{display:none}
+.tools:has(#t-stp:checked) .canvas .s2{display:inline}
+
+/* ---------- L3 modo com tela própria ---------- */
+.mode{position:relative;width:100%;height:190px;overflow:hidden;border:1px solid var(--bd);border-radius:var(--raio-s);background:#fff}
+.mode .main,.mode .scr{position:absolute;inset:0;padding:.8rem;display:grid;gap:.5rem;align-content:start}
+.mode .main{transition:transform 240ms var(--ease-out),opacity 240ms}
+.mode .scr{background:#fff;transform:translateX(100%);transition:transform 160ms var(--ease-in)}
+#cfg:checked~.scr{transform:none;transition:transform 240ms var(--ease-out)}
+#cfg:checked~.main{transform:translateX(-14%);opacity:.4}
+.mode textarea{font:inherit;border:2px solid var(--bd);border-radius:var(--raio-s);padding:.4rem;resize:none;height:70px}
+
+/* ---------- L4/L8 replay ---------- */
+.rp .la,.rp .lb{display:none}
+.rp:not(:has(.ra:checked)) .la{display:inline-flex}
+.rp:has(.ra:checked) .lb{display:inline-flex}
+.rp:has(.rb:checked) .lb{display:none}
+.rp:has(.rb:checked) .la{display:inline-flex}
+.rlog{display:grid;min-height:2.6em;align-items:center;font-weight:700;width:100%}
+.rlog>span{grid-area:1/1;opacity:0}
+.rlog>span.s0{opacity:1}
+.ra:checked~.rlog>.s0,.rb:checked~.rlog>.s0{opacity:0}
+.ra:checked~.rlog>.s1{animation:rsA var(--iv) forwards}.rb:checked~.rlog>.s1{animation:rsB var(--iv) forwards}
+.ra:checked~.rlog>.s2{animation:rsA var(--iv) var(--iv) forwards}.rb:checked~.rlog>.s2{animation:rsB var(--iv) var(--iv) forwards}
+.ra:checked~.rlog>.s3{animation:rsA var(--iv) calc(var(--iv)*2) forwards}.rb:checked~.rlog>.s3{animation:rsB var(--iv) calc(var(--iv)*2) forwards}
+.ra:checked~.rlog>.s4{animation:rfA .01s calc(var(--iv)*3) forwards}.rb:checked~.rlog>.s4{animation:rfB .01s calc(var(--iv)*3) forwards}
+@keyframes rsA{0%,99%{opacity:1}100%{opacity:0}} @keyframes rsB{0%,99%{opacity:1}100%{opacity:0}}
+@keyframes rfA{to{opacity:1}} @keyframes rfB{to{opacity:1}}
+.vid{width:100%;aspect-ratio:16/6;max-height:110px;background:#101826;border-radius:var(--raio-s);display:grid;place-items:center;color:#fff;position:relative}
+.helpchip{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);background:#fff;color:var(--tx);border-radius:999px;padding:.25rem .8rem;font-size:.8rem;font-weight:700;opacity:0;white-space:nowrap}
+.ra:checked~.vid .helpchip{animation:hcA .4s var(--ease-out) var(--hd) forwards}
+.rb:checked~.vid .helpchip{animation:hcB .4s var(--ease-out) var(--hd) forwards}
+@keyframes hcA{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes hcB{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* ---------- L5 soneca decrescente ---------- */
+.snz{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+.snz .chip{background:var(--amar-cl);color:var(--amar)}
+
+/* ---------- L6 divulgação/redução progressiva ---------- */
+.prog{display:grid;gap:.7rem;width:100%}
+.prog .stage{min-height:62px;display:flex;align-items:center;gap:.8rem}
+.prog .v1,.prog .v2,.prog .v3{display:none}
+.prog:has(#u1:checked) .v1,.prog:has(#u2:checked) .v2,.prog:has(#u3:checked) .v3{display:inline-flex}
+.prog .btn.iconly{padding:.6rem;position:relative}
+.prog .btn.iconly .tip{position:absolute;left:50%;top:calc(100% + 6px);transform:translateX(-50%);background:#101826;color:#fff;border-radius:6px;font-size:.75rem;padding:.2rem .5rem;white-space:nowrap;opacity:0;transition:opacity var(--dur-1)}
+.prog .btn.iconly:hover .tip,.prog .btn.iconly:focus-visible .tip{opacity:1}
+.coach{background:var(--amar-cl);border:1px solid #E6C27A;border-radius:var(--raio-s);padding:.3rem .6rem;font-size:.82rem}
+
+/* ---------- Exemplo: lava-louças ---------- */
+.dw{display:grid;gap:.8rem;width:100%}
+.dwsel{display:flex;gap:.4rem;flex-wrap:wrap}
+.dwsel label{cursor:pointer;border:2px solid var(--bd);border-radius:999px;padding:.25rem .8rem;font-weight:700;font-size:.82rem;background:#fff}
+.dw input:checked+label{border-color:var(--azul);background:var(--azul-cl);color:var(--azul-esc)}
+.dw input:focus-visible+label{outline:3px solid var(--foco)}
+.panel{display:flex;align-items:center;gap:1rem;background:#2B3442;border-radius:var(--raio);padding:1rem;flex-wrap:wrap}
+.leds{display:flex;gap:6px;align-items:center;color:#9AA6B5;font-size:.75rem;font-weight:700}
+.leds i{width:14px;height:14px;border-radius:50%;background:#465164;display:block}
+.sb{display:grid;place-items:center;min-width:170px;height:54px;border-radius:999px;border:2px solid #667386;color:#C5CDD8;font:800 .95rem Figtree,sans-serif;background:#3A4455}
+.sb span{grid-area:1/1;display:none;align-items:center;gap:.4rem}
+.dw:has(#dw1:checked) .sb .s-off,.dw:has(#dw2:checked) .sb .s-rdy,.dw:has(#dw3:checked) .sb .s-run,.dw:has(#dw4:checked) .sb .s-ok{display:inline-flex}
+.dw:has(#dw2:checked) .sb{background:var(--azul);border-color:#fff;color:#fff;animation:pulse 1.4s ease-out infinite}
+.dw:has(#dw3:checked) .sb{background:var(--verm);border-color:#fff;color:#fff}
+.dw:has(#dw4:checked) .sb{background:var(--verde);border-color:#fff;color:#fff}
+.dw:has(#dw3:checked) .leds i:nth-child(-n+3){background:#FFB347}
+
+/* ---------- P2 storyboard ---------- */
+.sb3{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem;width:100%}
+.frame{border:2px solid var(--bd);border-radius:var(--raio-s);background:#fff;padding:.6rem;display:grid;gap:.4rem;font-size:.8rem}
+.frame b{color:var(--tx2);font-size:.72rem;text-transform:uppercase}
+.frame .scr{min-height:54px;display:grid;place-items:center;background:var(--bg);border-radius:6px;padding:.4rem}
+
+/* ---------- P5 data-state ---------- */
+.ds{display:inline-flex;align-items:center;gap:.4rem;border:2px solid var(--azul);background:var(--azul);color:#fff;font:700 .92rem Figtree,sans-serif;padding:.5rem .9rem;border-radius:var(--raio-s);transition:background-color var(--dur-2) var(--ease-out),border-color var(--dur-2) var(--ease-out),transform var(--dur-2) var(--ease-out)}
+.ds .ic{display:none}
+.ds[data-state="idle"] .i-idle{display:inline}
+.ds[data-state="loading"]{opacity:.9} .ds[data-state="loading"] .i-load{display:inline;animation:spin .8s linear infinite}
+.ds[data-state="success"]{background:var(--verde);border-color:var(--verde);transform:scale(1.05)} .ds[data-state="success"] .i-ok{display:inline}
+.ds[data-state="error"]{background:var(--verm);border-color:var(--verm)} .ds[data-state="error"] .i-err{display:inline}
+
+/* ---------- checklist final ---------- */
+.ck{display:grid;gap:.15rem}
+.ck label{display:flex;gap:.5rem;align-items:flex-start;padding:.25rem 0;cursor:pointer;font-size:.9rem}
+.ck input{margin-top:.28rem;accent-color:var(--verde);width:1rem;height:1rem}
+.ck input:checked+span{text-decoration:line-through;color:var(--tx2)}
+.ckgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
+.ckgrid h4{margin:0 0 .3rem;font-family:Figtree,sans-serif;color:var(--azul-esc)}
+
+/* ---------- movimento reduzido: a própria página obedece (prática F11) ---------- */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+@media (max-width:560px){.spec{grid-template-columns:1fr}.spec dt{margin-top:.4rem}}
+</style>
+</head>
+<body>
+
+<!-- Ícones: conjunto Lucide (SVG inline) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-ccheck" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-cx" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></symbol>
+  <symbol id="i-loader" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24"><path d="m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></symbol>
+  <symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="in">
+    <h1>Microinterações — boas práticas em HTML + CSS</h1>
+    <p>Cada componente abaixo é uma prática do modelo de Dan Saffer (gatilho, regras, feedback, loops e modos), reescrita e demonstrada em CSS puro, sem JavaScript.</p>
+    <p>Passe o mouse, clique, use Tab e Espaço/Enter para ver os estados. Áudio e háptico não rodam em CSS e aparecem como ficha.</p>
+  </div>
+</header>
+
+<nav class="sticky" aria-label="Seções"><div class="in">
+  <a href="#gatilho">Gatilho</a><a href="#regras">Regras</a><a href="#feedback">Feedback</a><a href="#loops">Loops e modos</a><a href="#pratica">Prática</a><a href="#exemplos">Exemplos</a><a href="#checklist">Checklist</a>
+</div></nav>
+
+<main>
+<div class="legend">
+  <div><b>Como ler cada cartão:</b> topo = código da prática e a parte do modelo; meio = demonstração funcional; rodapé = descrição.</div>
+  <div><b>Prática</b> → a regra de design. <b>Aplicado aqui</b> → a técnica HTML/CSS usada no demo. <b>Evite</b> → o erro que a prática previne.</div>
+  <div class="note">Cores, fontes e raios são variáveis em <code>:root</code>; troque pelos tokens do seu design system. Ícones: Lucide, inline.</div>
+</div>
+
+<!-- =====================================================  GATILHO  -->
+<section id="gatilho">
+<h2>1. Gatilho</h2>
+<p class="lead">O que inicia a microinteração. Manual (usuário) ou do sistema (condição). O gatilho precisa ser reconhecível, previsível e proporcional à frequência de uso.</p>
+<div class="grid">
+
+<article class="p" id="g1">
+ <header><span class="id">G1</span><h3>Gatilho reconhecível, mesma ação sempre</h3><span class="tag">Gatilho</span></header>
+ <div class="demo">
+  <button class="btn" type="button">Salvar alterações</button>
+  <button class="btn sec" type="button">Cancelar</button>
+  <a class="btn ghost" href="#g1">Ver detalhes</a>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>O elemento deve parecer o que é. Se parece botão, age como botão; o mesmo gatilho dispara sempre a mesma ação.</dd>
+  <dt>Aplicado aqui</dt><dd>Hierarquia primário / secundário / texto; <code>&lt;button&gt;</code> nativo para ações e <code>&lt;a&gt;</code> para navegação; <code>cursor</code> e <code>:hover</code> coerentes.</dd>
+  <dt class="ev">Evite</dt><dd>Texto solto clicável sem affordance, ou botão que muda de ação conforme o contexto.</dd>
+ </dl>
+</article>
+
+<article class="p" id="g2">
+ <header><span class="id">G2</span><h3>Trazer o dado para o gatilho</h3><span class="tag">Gatilho</span></header>
+ <div class="demo">
+  <button class="bell" type="button" aria-label="Notificações: 3 não lidas"><svg class="ic"><use href="#i-bell"/></svg><span class="badge">3</span></button>
+  <button class="btn dl" type="button"><svg class="ic"><use href="#i-loader"/></svg><span>Baixando relatório · 64%</span></button>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>O próprio gatilho exibe a informação que o usuário quer (contagem, progresso), sem precisar abrir nada.</dd>
+  <dt>Aplicado aqui</dt><dd>Badge posicionado em <code>position:absolute</code> no sino; barra de progresso como <code>::before</code> com <code>scaleX</code> dentro do botão. O <code>aria-label</code> repete o dado para leitores de tela.</dd>
+  <dt class="ev">Evite</dt><dd>Obrigar o clique só para descobrir que não havia nada novo.</dd>
+ </dl>
+</article>
+
+<article class="p" id="g3">
+ <header><span class="id">G3</span><h3>Visibilidade proporcional à frequência</h3><span class="tag">Gatilho</span></header>
+ <div class="demo col">
+  <div class="disc">
+   <div><span>Ação frequente</span><i style="width:100%"></i></div>
+   <div><span>Uso ocasional</span><i style="width:72%"></i></div>
+   <div><span>Uso raro</span><i style="width:44%"></i></div>
+   <div><span>Quase nunca</span><i style="width:20%"></i></div>
+  </div>
+  <div class="row"><button class="btn pulse" type="button">Prioridade alta</button><span class="note">Movimento só para o que é urgente.</span></div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Quanto mais frequente a ação, mais visível o gatilho (botão com rótulo → ícone → item de menu → invisível). Movimento e som capturam atenção involuntária; reserve para prioridade alta.</dd>
+  <dt>Aplicado aqui</dt><dd>Barras proporcionais à visibilidade recomendada; <code>@keyframes pulse</code> (anel de <code>box-shadow</code>) só no botão crítico.</dd>
+  <dt class="ev">Evite</dt><dd>Esconder em menu a ação mais usada, ou animar tudo.</dd>
+ </dl>
+</article>
+
+<article class="p" id="g4">
+ <header><span class="id">G4</span><h3>Escolher o controle certo</h3><span class="tag">Gatilho</span></header>
+ <div class="demo">
+  <label class="sw"><input class="sr" type="checkbox" role="switch"><span class="trk"></span><span class="off">Avisos desligados</span><span class="on">Avisos ligados</span></label>
+  <span class="seg" role="radiogroup" aria-label="Período">
+   <label><input class="sr" type="radio" name="seg1" checked><span>Dia</span></label>
+   <label><input class="sr" type="radio" name="seg1"><span>Semana</span></label>
+   <label><input class="sr" type="radio" name="seg1"><span>Mês</span></label>
+  </span>
+  <label class="fld">Volume (faixa 0–10)<input type="range" min="0" max="10" value="6"></label>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Ação única → botão. Dois estados → toggle. Poucos estados definidos → segmentado/dial. Valor contínuo com faixa → slider. Entrada composta → formulário pré-preenchido.</dd>
+  <dt>Aplicado aqui</dt><dd>Toggle com <code>checkbox + role="switch"</code>, estado também em texto (não só cor); segmentado com <code>radio</code> + <code>:checked + span</code>; <code>input[type=range]</code> com <code>accent-color</code>.</dd>
+  <dt class="ev">Evite</dt><dd>Controle customizado quando o nativo resolve; estado indicado só por cor.</dd>
+ </dl>
+</article>
+
+<article class="p" id="g5">
+ <header><span class="id">G5</span><h3>Gatilho invisível com caminho visível</h3><span class="tag">Gatilho</span></header>
+ <div class="demo">
+  <label class="fld">Buscar <span class="row"><input type="search" placeholder="Pressione /  para buscar"><kbd>/</kbd><button class="btn sec" type="button" aria-label="Buscar"><svg class="ic"><use href="#i-search"/></svg></button></span></label>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Atalhos e gestos são bem-vindos para quem é avançado, mas toda ação importante precisa de pelo menos um caminho visível. O atalho deve ser anunciado (dica, <code>kbd</code>).</dd>
+  <dt>Aplicado aqui</dt><dd>Campo + botão visível + <code>&lt;kbd&gt;</code> mostrando o atalho. (O atalho em si exige JavaScript; aqui só o contrato visual.)</dd>
+  <dt class="ev">Evite</dt><dd>Ação crítica acessível apenas por gesto escondido.</dd>
+ </dl>
+</article>
+
+<article class="p" id="g6">
+ <header><span class="id">G6</span><h3>Todos os estados do controle</h3><span class="tag">Gatilho</span></header>
+ <div class="demo">
+  <p class="sub">Padrão · hover · foco · ativo · carregando · desabilitado</p>
+  <button class="btn" type="button">Padrão</button>
+  <button class="btn is-hover" type="button">Hover</button>
+  <button class="btn is-focus" type="button">Foco</button>
+  <button class="btn is-active" type="button">Ativo</button>
+  <button class="btn loading" type="button" aria-busy="true"><svg class="ic spin"><use href="#i-loader"/></svg>Enviando</button>
+  <button class="btn" type="button" aria-disabled="true">Desabilitado</button>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Projete cada estado: padrão, hover, foco, ativo/pressionado, em processamento e indisponível. Indicadores de estado ficam junto ao gatilho.</dd>
+  <dt>Aplicado aqui</dt><dd>Pseudo-classes <code>:hover</code>, <code>:focus-visible</code>, <code>:active</code>; <code>aria-busy</code> + ícone girando; <code>aria-disabled="true"</code> (mantém o foco e pode explicar o motivo).</dd>
+  <dt class="ev">Evite</dt><dd>Remover o outline de foco; deixar botão sem resposta ao pressionar.</dd>
+ </dl>
+</article>
+
+<article class="p" id="g7">
+ <header><span class="id">G7</span><h3>Rótulos com feedforward</h3><span class="tag">Gatilho</span></header>
+ <div class="demo col">
+  <table class="tbl">
+   <tr><th>Evite</th><th>Prefira</th><th>Por quê</th></tr>
+   <tr><td class="bad">Enviar</td><td class="good">Enviar relatório</td><td>Antecipa o que vai acontecer.</td></tr>
+   <tr><td class="bad">OK</td><td class="good">Salvar alterações</td><td>Verbo específico da ação.</td></tr>
+   <tr><td class="bad">Alerta / Aviso / Notificação (alternando)</td><td class="good">Aviso (sempre)</td><td>Um nome por conceito.</td></tr>
+  </table>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Rótulos curtos, específicos, na linguagem do usuário e consistentes. O texto do rótulo antecipa o resultado (feedforward). Só use rótulo quando o ícone sozinho for ambíguo.</dd>
+  <dt>Aplicado aqui</dt><dd>Tabela de comparação real antes/depois.</dd>
+  <dt class="ev">Evite</dt><dd>Humor que atrapalha a clareza; sinônimos alternando para o mesmo conceito.</dd>
+ </dl>
+</article>
+
+<article class="p" id="g8">
+ <header><span class="id">G8</span><h3>Gatilho do sistema com controle do usuário</h3><span class="tag">Gatilho</span></header>
+ <div class="demo col">
+  <input class="sr" type="checkbox" id="dis1">
+  <div class="sysb"><svg class="ic"><use href="#i-info"/></svg><span>Sincronizado há 3 min.</span><button class="btn sec" type="button" style="padding:.25rem .7rem">Sincronizar agora</button><label class="x" for="dis1"><svg class="ic"><use href="#i-x"/></svg>Não mostrar mais</label></div>
+  <label class="btn ghost undo" for="dis1">Restaurar aviso (demo)</label>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Todo gatilho automático precisa de (1) indicador de que disparou, (2) forma manual de rodar o mesmo processo e (3) forma de ajustar/desligar no ponto em que aparece.</dd>
+  <dt>Aplicado aqui</dt><dd>Botão "Sincronizar agora" (manual), "Não mostrar mais" no próprio aviso. O fechamento usa <code>checkbox:checked ~ .sysb { display:none }</code>.</dd>
+  <dt class="ev">Evite</dt><dd>Aviso automático que só se desliga em configurações escondidas.</dd>
+ </dl>
+</article>
+
+<article class="p" id="g9">
+ <header><span class="id">G9</span><h3>Hover antecipa um dado interno</h3><span class="tag">Gatilho</span></header>
+ <div class="demo" style="padding-bottom:2.6rem">
+  <button class="fold" type="button">Contratos<span class="tip" role="tooltip">12 arquivos · atualizado há 2 h</span></button>
+  <span class="note">Passe o mouse ou use Tab.</span>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>O estado de hover/foco é lugar ideal para revelar um dado antes do clique, no próprio gatilho, sem abrir janela.</dd>
+  <dt>Aplicado aqui</dt><dd>Tooltip com <code>opacity/transform</code> (propriedades baratas) acionado por <code>:hover</code> e <code>:focus-visible</code>, para quem usa teclado.</dd>
+  <dt class="ev">Evite</dt><dd>Informação essencial apenas no hover (não existe em toque).</dd>
+ </dl>
+</article>
+
+</div>
+</section>
+
+<!-- =====================================================  REGRAS  -->
+<section id="regras">
+<h2>2. Regras</h2>
+<p class="lead">O que acontece, em que ordem e com quais dados. As regras são invisíveis: só o feedback as revela. Menos opções, bons padrões e prevenção de erros.</p>
+<div class="grid">
+
+<article class="p" id="r1">
+ <header><span class="id">R1</span><h3>Regras simples e explicáveis (diagrama lógico)</h3><span class="tag t-r">Regras</span></header>
+ <div class="demo col cartdemo">
+  <div class="flow"><span class="n">Clique</span><svg class="ic"><use href="#i-right"/></svg><span class="d">Já foi adicionado?</span><svg class="ic"><use href="#i-right"/></svg><span class="n">sim: "Adicionar de novo"</span><span class="n">não: "Adicionar ao carrinho"</span></div>
+  <label class="sw"><input class="sr" type="checkbox" id="bought"><span class="trk"></span><span>Item já está no carrinho</span></label>
+  <button class="btn" type="button"><span class="a">Adicionar ao carrinho</span><span class="b">Adicionar de novo</span></button>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Se não dá para escrever as regras em poucas linhas ou desenhar o fluxo, o usuário não formará um modelo mental. Comece pelas óbvias, depois as nuances.</dd>
+  <dt>Aplicado aqui</dt><dd>Fluxo lógico visível + rótulo que muda com o estado (<code>:has(#bought:checked)</code>). Nuance: já comprado → "Adicionar de novo".</dd>
+  <dt class="ev">Evite</dt><dd>Regras que só existem na cabeça de quem implementou.</dd>
+ </dl>
+</article>
+
+<article class="p" id="r2">
+ <header><span class="id">R2</span><h3>Estados mínimos de um objeto: convite, ativo, atualizado</h3><span class="tag t-r">Regras</span></header>
+ <div class="demo col">
+  <div class="item" tabindex="0"><svg class="ic grip"><use href="#i-grip"/></svg><span>Comunicado de manutenção</span></div>
+  <div class="states3"><span class="chip">1 · Convite: alça + cursor grab</span><span class="chip">2 · Ativo: eleva e inclina</span><span class="chip">3 · Atualizado: assenta</span></div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Todo objeto interativo tem pelo menos: estado que convida à ação, estado durante a ação e estado após a ação. Objetos iguais agem igual; objetos que agem diferente parecem diferentes.</dd>
+  <dt>Aplicado aqui</dt><dd>Segure o clique no cartão: <code>:active</code> eleva com <code>box-shadow</code> + <code>transform</code>; solte e ele volta com <code>transition</code>. O ícone de alça é o convite.</dd>
+  <dt class="ev">Evite</dt><dd>Itens arrastáveis idênticos a itens estáticos.</dd>
+ </dl>
+</article>
+
+<article class="p" id="r3">
+ <header><span class="id">R3</span><h3>Não começar do zero: padrões e contexto</h3><span class="tag t-r">Regras</span></header>
+ <div class="demo">
+  <label class="fld">Tipo de comunicado<select><option selected>Incidente</option><option>Normalização</option><option>Novidade</option></select><span class="sugg"><svg class="ic"><use href="#i-check"/></svg>Sugerido: mais usado por você</span></label>
+  <label class="fld">Formato<input value="PNG"><span class="sugg"><svg class="ic"><use href="#i-check"/></svg>Padrão do processo</span></label>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Logo após o gatilho, pergunte "o que já sei do usuário e do contexto?" (histórico, plataforma, hora) e pré-preencha. Mostre de onde veio o padrão.</dd>
+  <dt>Aplicado aqui</dt><dd>Campos já preenchidos (<code>selected</code>, <code>value</code>) e texto "Sugerido" explicando a origem.</dd>
+  <dt class="ev">Evite</dt><dd>Formulário vazio e coleta de dados que possam constranger ou expor o usuário.</dd>
+ </dl>
+</article>
+
+<article class="p" id="r4">
+ <header><span class="id">R4</span><h3>Absorver a complexidade (entrada tolerante)</h3><span class="tag t-r">Regras</span></header>
+ <div class="demo col">
+  <label class="fld">Telefone<input type="tel" inputmode="tel" placeholder="Aceita qualquer formato"></label>
+  <table class="tbl">
+   <tr><th>Digitado</th><th>Sistema normaliza para</th></tr>
+   <tr><td>85 99999 0000</td><td>(85) 99999-0000</td></tr>
+   <tr><td>+55 (85) 99999-0000</td><td>(85) 99999-0000</td></tr>
+   <tr><td>85999990000</td><td>(85) 99999-0000</td></tr>
+  </table>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>A complexidade não some: ou o sistema absorve ou o usuário. Aceite variações (máscara, espaços, "#" colado) e normalize em silêncio. Valores de exemplo ilustrativos.</dd>
+  <dt>Aplicado aqui</dt><dd><code>type="tel"</code> + <code>inputmode</code> abre o teclado certo; a normalização em si é lógica de código, descrita na tabela.</dd>
+  <dt class="ev">Evite</dt><dd>"Formato inválido" para algo que o sistema poderia ter entendido.</dd>
+ </dl>
+</article>
+
+<article class="p" id="r5">
+ <header><span class="id">R5</span><h3>Opções limitadas e padrão inteligente em destaque</h3><span class="tag t-r">Regras</span></header>
+ <div class="demo col">
+  <div class="box"><b>Alarme tocando</b>
+   <div class="row" style="margin-top:.5rem"><button class="btn" type="button">Adiar 15 min</button><button class="btn sec" type="button">Parar</button></div>
+  </div>
+  <div class="box"><b>Excluir 3 arquivos?</b>
+   <div class="row" style="margin-top:.5rem"><button class="btn sec" type="button">Cancelar</button><button class="btn danger" type="button">Excluir 3 arquivos</button></div>
+  </div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Cada opção cria uma regra. Destaque a ação mais provável, mostre o que o padrão decide ("Adiar 15 min", não "Adiar") e use verbo específico no botão destrutivo.</dd>
+  <dt>Aplicado aqui</dt><dd>Primário preenchido x secundário contornado; botão destrutivo em vermelho com rótulo que repete o verbo da pergunta.</dd>
+  <dt class="ev">Evite</dt><dd>Duas opções com o mesmo peso visual; Sim/Não quando o verbo diria mais.</dd>
+ </dl>
+</article>
+
+<article class="p" id="r6">
+ <header><span class="id">R6</span><h3>Eliminar casos de borda pelo desenho</h3><span class="tag t-r">Regras</span></header>
+ <div class="demo">
+  <label class="fld">Ano de nascimento (texto livre)<input placeholder="aceita 'abc', 99, 3000…"></label>
+  <label class="fld">Ano de nascimento (lista)<select><option>2008</option><option>2007</option><option>2006</option><option>2005</option><option>2004</option></select></label>
+  <label class="fld">Quantidade (faixa)<input type="number" min="1" max="10" value="1"></label>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Reformule a regra para que o erro seja impossível: lista em vez de texto livre, faixa em vez de número solto. Menos opções, menos bordas.</dd>
+  <dt>Aplicado aqui</dt><dd><code>&lt;select&gt;</code> e <code>type="number"</code> com <code>min/max</code> substituem validação posterior.</dd>
+  <dt class="ev">Evite</dt><dd>Validar depois o que poderia ser impossível de errar.</dd>
+ </dl>
+</article>
+
+<article class="p" id="r7">
+ <header><span class="id">R7</span><h3>Prevenção de erro (poka-yoke)</h3><span class="tag t-r">Regras</span></header>
+ <div class="demo">
+  <div class="mail">
+   <label class="sw"><input class="sr" type="checkbox" id="m-ref"><span class="trk"></span><span>Texto diz "segue em anexo"</span></label>
+   <label class="sw"><input class="sr" type="checkbox" id="m-file"><span class="trk"></span><span>Arquivo anexado</span></label>
+   <div class="warn" role="alert"><svg class="ic"><use href="#i-alert"/></svg><span>O texto cita um anexo, mas nenhum arquivo foi anexado. <b>Anexar arquivo</b> ou enviar assim mesmo.</span></div>
+   <div class="row"><button class="btn" type="button"><svg class="ic"><use href="#i-send"/></svg>Enviar e-mail</button><button class="btn sec" type="button"><svg class="ic"><use href="#i-clip"/></svg>Anexar</button></div>
+  </div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Previna o erro antes que aconteça (lembrar de anexo, pausar com bateria baixa) em vez de reclamar depois. O aviso aparece só quando a condição realmente existe.</dd>
+  <dt>Aplicado aqui</dt><dd>Ligue "Texto diz anexo" sem ligar "Arquivo anexado": o aviso surge via <code>:has(#m-ref:checked):not(:has(#m-file:checked))</code> e traz a saída (anexar / enviar mesmo).</dd>
+  <dt class="ev">Evite</dt><dd>Pop-up de confirmação para tudo; é o último recurso.</dd>
+ </dl>
+</article>
+
+<article class="p" id="r8">
+ <header><span class="id">R8</span><h3>Erro: o que houve e como corrigir, sem acusar</h3><span class="tag t-r">Regras</span></header>
+ <div class="demo">
+  <div class="fld val"><label for="em">E-mail institucional</label><input id="em" type="email" placeholder="nome@empresa.com.br" value="nome.empresa.com.br">
+   <span class="msg"><svg class="ic"><use href="#i-cx"/></svg>Falta o @ no e-mail. Exemplo: nome@empresa.com.br</span></div>
+  <span class="note">Clique fora do campo: o erro só aparece ao terminar de digitar.</span>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Mensagem curta que diz o problema e a correção, com exemplo; sem "você errou". Não valide enquanto a pessoa ainda digita.</dd>
+  <dt>Aplicado aqui</dt><dd><code>input:not(:focus):not(:placeholder-shown):invalid ~ .msg</code> mostra a mensagem só após sair do campo; borda + ícone + texto (não só cor).</dd>
+  <dt class="ev">Evite</dt><dd>"Entrada inválida" genérico ou erro vermelho no primeiro caractere.</dd>
+ </dl>
+</article>
+
+<article class="p wide" id="r9">
+ <header><span class="id">R9</span><h3>Microcopy: só o necessário</h3><span class="tag t-r">Regras</span></header>
+ <div class="demo col">
+  <table class="tbl">
+   <tr><th>Evite</th><th>Prefira</th><th>Prática</th></tr>
+   <tr><td class="bad">"Toque em Próximo para continuar"</td><td class="good">"Próximo"</td><td>O rótulo basta; não instrua o óbvio.</td></tr>
+   <tr><td class="bad">"Você digitou a senha errada"</td><td class="good">"Senha incorreta. Digite novamente."</td><td>Evite "você/eu"; use verbo de ação.</td></tr>
+   <tr><td class="bad">Placeholder como único rótulo (some ao digitar)</td><td class="good">Rótulo fixo acima + exemplo no campo</td><td>Rótulo acima do campo é o melhor lugar.</td></tr>
+   <tr><td class="bad">"Não desativar notificações"</td><td class="good">"Receber notificações"</td><td>Evite dupla negação.</td></tr>
+   <tr><td class="bad">Botão "Excluir" sob a pergunta "Remover?"</td><td class="good">Mesmo verbo na pergunta e no botão</td><td>Texto de instrução = texto do controle.</td></tr>
+   <tr><td class="bad">"12/11/2026 14:02"</td><td class="good">"há 3 horas"</td><td>Tempo relacional, salvo quando a exatidão importa.</td></tr>
+   <tr><td class="bad">Texto truncado sem como ver o resto</td><td class="good">Reticências + hover/toque mostra completo</td><td>Truncar exige forma de expandir.</td></tr>
+  </table>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Texto mínimo, na linguagem do usuário, consistente com o controle.</dd>
+  <dt>Aplicado aqui</dt><dd>Tabela comparativa; cada linha é uma regra de microcopy.</dd>
+ </dl>
+</article>
+
+<article class="p" id="r10">
+ <header><span class="id">R10</span><h3>Algoritmo: sequência, decisões, repetições, variáveis</h3><span class="tag t-r">Regras</span></header>
+ <div class="demo col">
+<pre>/* Soneca decrescente — ficha de algoritmo */
+:root{
+  --soneca-inicial: 5min;   /* variável  */
+  --soneca-passo:   1min;   /* variável  */
+  --soneca-minima:  1min;   /* variável  */
+  --auto-desliga:   10min;  /* variável  */
+}
+Sequência : tocar → (usuário adia?) → esperar → tocar
+Decisão   : se soneca &gt; mínima, soneca = soneca − passo
+Repetição : até parar ou passar o auto-desliga</pre>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Todo algoritmo tem 4 partes. Deixe valores como variáveis para ajustar sem reescrever, e deixe o designer participar para que valores humanos entrem na lógica.</dd>
+  <dt>Aplicado aqui</dt><dd>Variáveis nomeadas (aqui como custom properties) — o mesmo raciocínio usa <code>--iv</code> no demo L4. Valores ilustrativos.</dd>
+ </dl>
+</article>
+
+<article class="p wide" id="r11">
+ <header><span class="id">R11</span><h3>Princípios de regra sem componente visual</h3><span class="tag t-r">Regras</span></header>
+ <div class="demo" style="align-items:stretch">
+  <div class="box" style="flex:1 1 220px"><b>Objetivo = estado final</b><br><span class="note">Login é "estar dentro", não "digitar senha". Escreva o objetivo em uma frase antes de desenhar.</span></div>
+  <div class="box" style="flex:1 1 220px"><b>Respeitar expectativas</b><br><span class="note">Só quebre um modelo mental estabelecido se o ganho for claro e imediato.</span></div>
+  <div class="box" style="flex:1 1 220px"><b>Privacidade</b><br><span class="note">Se o dado pode constranger ou expor o usuário, não colete.</span></div>
+  <div class="box" style="flex:1 1 220px"><b>Poucos verbos, poucos substantivos</b><br><span class="note">Muitos verbos sobre poucos objetos; cada objeto com identidade única.</span></div>
+  <div class="box" style="flex:1 1 220px"><b>Ordem das opções</b><br><span class="note">Início e fim são mais lembrados; destaque guia a escolha; liste pelo uso, não pela lógica.</span></div>
+  <div class="box" style="flex:1 1 220px"><b>Escolhas significativas</b><br><span class="note">Se a opção não muda o resultado, remova. No máximo uma opção que altere radicalmente as regras (isso vira modo).</span></div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Princípios que orientam as regras e não têm demo interativo.</dd>
+  <dt>Aplicado aqui</dt><dd>Cartões de referência rápida para consulta durante a análise.</dd>
+ </dl>
+</article>
+
+</div>
+</section>
+
+<!-- =====================================================  FEEDBACK  -->
+<section id="feedback">
+<h2>3. Feedback</h2>
+<p class="lead">Ilumina as regras: confirma o que aconteceu e o que resultou. Basta o suficiente para formar um modelo mental; imediato, proporcional e nunca arbitrário.</p>
+<div class="grid">
+
+<article class="p" id="f1">
+ <header><span class="id">F1</span><h3>Reconhecimento imediato de toda ação</h3><span class="tag t-f">Feedback</span></header>
+ <div class="demo">
+  <button class="btn" type="button">Pressione e segure</button>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Todo ato do usuário recebe resposta perceptível quase instantânea e perto do ponto de ação, mesmo que o resultado final demore.</dd>
+  <dt>Aplicado aqui</dt><dd><code>:active</code> com <code>transform: scale(.97)</code> e sombra interna em 120 ms (<code>--dur-1</code>).</dd>
+  <dt class="ev">Evite</dt><dd>Botão que só reage depois do processamento terminar.</dd>
+ </dl>
+</article>
+
+<article class="p" id="f2">
+ <header><span class="id">F2</span><h3>Confirmação que volta ao normal (botão copiar)</h3><span class="tag t-f">Feedback</span></header>
+ <div class="demo">
+  <button class="copy" type="button"><span class="ci"><svg class="ic"><use href="#i-copy"/></svg></span><span class="co"><svg class="ic"><use href="#i-check"/></svg></span><span class="ti">Copiar</span><span class="to">Copiado</span></button>
+  <span class="note">Clique: cresce, vira verde, mostra ✓ e volta em 2 s. (Safari não foca botão ao clicar; use Tab+Enter.)</span>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Resposta transitória a uma ação: confirma, comunica o resultado ("Copiado") e retorna ao estado inicial sozinha. Mudança de ícone + texto + cor (redundância).</dd>
+  <dt>Aplicado aqui</dt><dd><code>@keyframes</code> disparados por <code>:focus</code>; ícones e textos empilhados em <code>grid</code>; o ✓ entra com <code>pop</code>. Em produção o copiar real e o <code>aria-live</code> exigem JavaScript.</dd>
+  <dt class="ev">Evite</dt><dd>Feedback permanente que deixa o botão "preso" em Copiado.</dd>
+ </dl>
+</article>
+
+<article class="p" id="f3">
+ <header><span class="id">F3</span><h3>Feedback proporcional à importância</h3><span class="tag t-f">Feedback</span></header>
+ <div class="demo col">
+  <div class="tier"><b>Mínimo</b><span><svg class="ic" style="color:var(--verde)"><use href="#i-ccheck"/></svg> Salvo</span></div>
+  <div class="tier"><b>Médio</b><span class="toast"><svg class="ic"><use href="#i-ccheck"/></svg>Rascunho salvo</span></div>
+  <div class="tier"><b>Alto</b><span class="blk" role="alert"><svg class="ic" style="color:var(--verm)"><use href="#i-alert"/></svg><span><b>Sem conexão.</b> Suas alterações não foram enviadas. <u>Tentar novamente</u></span></span></div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Qual o mínimo que comunica o necessário? Quanto mais importante, mais proeminente (e mais canais). Ação rotineira pede quase nada.</dd>
+  <dt>Aplicado aqui</dt><dd>Três níveis: marca inline, toast discreto e bloco de alerta com <code>role="alert"</code>.</dd>
+  <dt class="ev">Evite</dt><dd>Modal para confirmar algo trivial.</dd>
+ </dl>
+</article>
+
+<article class="p" id="f4">
+ <header><span class="id">F4</span><h3>Usar elementos negligenciados (cursor, aba, ícone)</h3><span class="tag t-f">Feedback</span></header>
+ <div class="demo col">
+  <div class="cur">
+   <div style="cursor:progress">progress</div>
+   <div style="cursor:not-allowed">not-allowed</div>
+   <div style="cursor:grab">grab</div>
+   <div style="cursor:help">help</div>
+   <div style="cursor:zoom-in">zoom-in</div>
+  </div>
+  <span class="note">Fora do CSS: título da aba ("(3) Inbox"), ícone do app, barra de rolagem, barra de progresso.</span>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Dê feedback sem adicionar elementos: cursor, aba do navegador, badge no ícone, scrollbar.</dd>
+  <dt>Aplicado aqui</dt><dd>Propriedade <code>cursor</code> por área (passe o mouse). Aba e ícone são lista de referência.</dd>
+ </dl>
+</article>
+
+<article class="p" id="f5">
+ <header><span class="id">F5</span><h3>Progresso e estimativa em processos longos</h3><span class="tag t-f">Feedback</span></header>
+ <div class="demo col">
+  <div>Enviando 3 de 5 arquivos · faltam ~8 s</div>
+  <div class="bar det" role="progressbar" aria-valuemin="0" aria-valuemax="100"><span></span></div>
+  <div class="note">Duração desconhecida? Use barra indeterminada:</div>
+  <div class="bar ind" role="progressbar" aria-label="Carregando"><span></span></div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Se o processo é longo, mostre que está em andamento e, quando possível, quanto falta. Determinada quando se sabe a duração; indeterminada quando não.</dd>
+  <dt>Aplicado aqui</dt><dd><code>role="progressbar"</code>; largura animada com <code>linear</code> (progresso) e deslocamento com <code>transform</code> (indeterminada).</dd>
+  <dt class="ev">Evite</dt><dd>Spinner eterno sem texto.</dd>
+ </dl>
+</article>
+
+<article class="p" id="f6">
+ <header><span class="id">F6</span><h3>Desempenho percebido (skeleton)</h3><span class="tag t-f">Feedback</span></header>
+ <div class="demo col">
+  <div class="skcard"><div class="sk av"></div><div style="flex:1;display:grid;gap:.4rem"><div class="sk" style="height:14px;width:60%"></div><div class="sk" style="height:12px;width:90%"></div></div></div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Animação também serve para melhorar a percepção de velocidade: mostrar a forma do conteúdo enquanto carrega.</dd>
+  <dt>Aplicado aqui</dt><dd><code>linear-gradient</code> com <code>background-position</code> animado (shimmer) sobre blocos com o formato do conteúdo.</dd>
+ </dl>
+</article>
+
+<article class="p" id="f7">
+ <header><span class="id">F7</span><h3>Animação com propósito: direção coerente</h3><span class="tag t-f">Feedback</span></header>
+ <div class="demo col">
+  <div class="pan">
+   <input class="sr" type="checkbox" id="pn">
+   <div class="cnt"><label class="btn sec" for="pn"><svg class="ic"><use href="#i-sliders"/></svg>Filtros</label><p class="note">Conteúdo da página</p></div>
+   <div class="side"><b>Filtros</b><p class="note">Entra pela esquerda e sai pela esquerda.</p><label class="btn ghost" for="pn">Fechar</label></div>
+  </div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Animar para manter contexto e revelar o modelo espacial: o que entra por um lado sai pelo mesmo lado. Saída um pouco mais rápida que entrada.</dd>
+  <dt>Aplicado aqui</dt><dd><code>translateX</code> + <code>opacity</code> (só propriedades baratas); entrada 240 ms <code>ease-out</code>, saída 160 ms <code>ease-in</code>.</dd>
+  <dt class="ev">Evite</dt><dd>Animação decorativa que não explica nada.</dd>
+ </dl>
+</article>
+
+<article class="p" id="f8">
+ <header><span class="id">F8</span><h3>Animação rápida: metade do tempo que parece certo</h3><span class="tag t-f">Feedback</span></header>
+ <div class="demo col">
+  <div class="dur">
+   <div class="lane"><b>120 ms</b><i style="transition:transform 120ms linear"></i></div>
+   <div class="lane"><b>300 ms</b><i style="transition:transform 300ms linear"></i></div>
+   <div class="lane"><b>800 ms (lento demais)</b><i style="transition:transform 800ms linear"></i></div>
+  </div>
+  <span class="note">Passe o mouse sobre as barras.</span>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Animação deve ser rápida, suave e simples. Para interface, 100–300 ms; se parece certo, tente reduzir pela metade.</dd>
+  <dt>Aplicado aqui</dt><dd>Três durações lado a lado, mesma curva, disparadas por <code>:hover</code>.</dd>
+ </dl>
+</article>
+
+<article class="p" id="f9">
+ <header><span class="id">F9</span><h3>Curva de movimento natural</h3><span class="tag t-f">Feedback</span></header>
+ <div class="demo col">
+  <div class="dur">
+   <div class="lane"><b>linear (mecânico)</b><i style="transition:transform 500ms linear"></i></div>
+   <div class="lane"><b>ease-out (entrar)</b><i style="transition:transform 500ms cubic-bezier(.2,.7,.2,1)"></i></div>
+   <div class="lane"><b>ease-in (sair)</b><i style="transition:transform 500ms cubic-bezier(.4,0,1,1)"></i></div>
+  </div>
+  <span class="note">Passe o mouse sobre as barras.</span>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Movimento com inércia/gravidade parece natural. Entrar: desacelera no fim (ease-out). Sair: acelera (ease-in). Evite linear, exceto em progresso.</dd>
+  <dt>Aplicado aqui</dt><dd>Mesma duração com três curvas; tokens <code>--ease-out</code> e <code>--ease-in</code> usados nos demais componentes.</dd>
+ </dl>
+</article>
+
+<article class="p" id="f10">
+ <header><span class="id">F10</span><h3>Respeitar movimento reduzido</h3><span class="tag t-f">Feedback</span></header>
+ <div class="demo">
+  <svg class="ic spin" style="width:1.6rem;height:1.6rem"><use href="#i-loader"/></svg>
+  <span><b class="rm-off">Movimento normal detectado.</b><b class="rm-on">Movimento reduzido ativo: animações desativadas nesta página.</b></span>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Quem configurou "reduzir movimento" no sistema não deve ver animações longas ou repetitivas. A informação nunca pode depender só do movimento.</dd>
+  <dt>Aplicado aqui</dt><dd><code>@media (prefers-reduced-motion: reduce)</code> zera durações em toda a página e alterna o texto acima. Teste ligando a opção no sistema.</dd>
+ </dl>
+</article>
+
+<article class="p" id="f11">
+ <header><span class="id">F11</span><h3>Mensagens: ícone + texto + ação, não só cor</h3><span class="tag t-f">Feedback</span></header>
+ <div class="demo">
+  <div class="msgs">
+   <div class="m ok" role="status"><svg class="ic"><use href="#i-ccheck"/></svg><span>Comunicado enviado.</span></div>
+   <div class="m in" role="status"><svg class="ic"><use href="#i-info"/></svg><span>Aprovação pendente da coordenação.</span></div>
+   <div class="m wr" role="alert"><svg class="ic"><use href="#i-alert"/></svg><span>Faltam 2 campos obrigatórios.</span></div>
+   <div class="m er" role="alert"><svg class="ic"><use href="#i-cx"/></svg><span>Não foi possível salvar. Verifique a conexão.</span><button class="btn sec" type="button">Tentar de novo</button></div>
+  </div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Texto preciso, curto, sem "erro" vazio, dizendo o que houve e como corrigir; controle de correção ao lado. Ícone + texto garantem leitura para daltônicos.</dd>
+  <dt>Aplicado aqui</dt><dd><code>role="status"</code> (não interrompe) e <code>role="alert"</code> (interrompe) conforme a gravidade.</dd>
+ </dl>
+</article>
+
+<article class="p" id="f12">
+ <header><span class="id">F12</span><h3>Feedback na borda de uma regra (limite)</h3><span class="tag t-f">Feedback</span></header>
+ <div class="demo col">
+  <div class="meter"><span>Playlist 28/30</span><div class="bar"><span style="width:93%"></span></div><button class="btn" type="button"><svg class="ic"><use href="#i-plus"/></svg>Adicionar</button></div>
+  <div class="meter full"><span>Playlist 30/30</span><div class="bar"><span style="width:100%"></span></div><button class="btn" type="button" aria-disabled="true" aria-describedby="lim">Adicionar</button></div>
+  <span id="lim" class="note" style="color:var(--amar)">Limite de 30 músicas. Remova uma para adicionar outra.</span>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Ao chegar a uma borda (limite, fim da lista), avise antes do erro e explique o motivo; não apenas bloqueie.</dd>
+  <dt>Aplicado aqui</dt><dd>Medidor mostra a proximidade; botão desabilitado com <code>aria-describedby</code> apontando para o motivo.</dd>
+ </dl>
+</article>
+
+<article class="p" id="f13">
+ <header><span class="id">F13</span><h3>Dizer também o que não aconteceu</h3><span class="tag t-f">Feedback</span></header>
+ <div class="demo">
+  <span class="toast"><svg class="ic"><use href="#i-info"/></svg>Pedido cancelado. Nada foi cobrado.</span>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Quando tranquiliza, comunique a ausência de efeito colateral.</dd>
+  <dt>Aplicado aqui</dt><dd>Toast com a segunda frase explicando o que não ocorreu.</dd>
+ </dl>
+</article>
+
+<article class="p" id="f14">
+ <header><span class="id">F14</span><h3>Estado vazio útil (personalidade com dose)</h3><span class="tag t-f">Feedback</span></header>
+ <div class="demo">
+  <div class="empty"><svg class="ic"><use href="#i-search"/></svg><p style="margin:.3rem 0"><b>Nada por aqui com "xyz".</b></p><p class="note" style="margin:0">Tente outro termo ou remova os filtros.</p></div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Esperas e estados vazios são o melhor lugar para um toque de personalidade, sem perder clareza e sem acusar.</dd>
+  <dt>Aplicado aqui</dt><dd>Ícone neutro + frase humana + próximo passo concreto.</dd>
+ </dl>
+</article>
+
+<article class="p" id="f15">
+ <header><span class="id">F15</span><h3>Espera com microcopy variável</h3><span class="tag t-f">Feedback</span></header>
+ <div class="demo">
+  <svg class="ic spin"><use href="#i-loader"/></svg>
+  <span class="rot"><span>Procurando a música…</span><span>Conferindo o catálogo…</span><span>Quase lá…</span></span>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Em esperas, variar o texto reduz o tédio. Use só enquanto durar a espera e sem repetir piada em ação frequente.</dd>
+  <dt>Aplicado aqui</dt><dd>Três <code>span</code> empilhados em <code>grid</code> alternando <code>opacity</code> com <code>animation-delay</code>.</dd>
+ </dl>
+</article>
+
+<article class="p wide" id="f16">
+ <header><span class="id">F16</span><h3>Áudio e háptico (ficha — não reproduzível em CSS)</h3><span class="tag t-f">Feedback</span></header>
+ <div class="demo col">
+  <table class="tbl">
+   <tr><th>Canal</th><th>Regras</th></tr>
+   <tr><td>Áudio</td><td>Dois usos: ênfase (confirma ação) e alerta (evento do sistema). Combinado com visual é mais eficaz. Earcon com menos de 1 s, distinto por ação, 2 a 4 notas, nunca em loop. Teste da buzina: valeria o usuário saber disso sem olhar? Sempre permitir desligar. Considerar contexto (ruído, hora, presença).</td></tr>
+   <tr><td>Háptico</td><td>Reforça ação física ou alerta sem som. Pessoas distinguem poucos níveis (3 a 4); use para sinal sutil ou alerta disruptivo, nunca mensagem complexa.</td></tr>
+   <tr><td>Regras do feedback</td><td>Defina mudança por contexto, duração (e o que dispensa), intensidade (e se cresce) e repetição.</td></tr>
+   <tr><td>Equivalente visual</td><td>Todo som ou vibração importante tem correspondente visual (acessibilidade e ambientes silenciosos).</td></tr>
+  </table>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Use o canal certo na dose certa. Mais canais = mais intrusivo.</dd>
+  <dt>Aplicado aqui</dt><dd>Tabela de referência; a implementação (Web Audio, Vibration API) depende de JavaScript e não faz parte deste material.</dd>
+ </dl>
+</article>
+
+</div>
+</section>
+
+<!-- =====================================================  LOOPS E MODOS  -->
+<section id="loops">
+<h2>4. Loops e modos</h2>
+<p class="lead">Como a microinteração se comporta no tempo: repetições, limites, memória, desvios das regras (modos) e evolução com o uso.</p>
+<div class="grid">
+
+<article class="p" id="l1">
+ <header><span class="id">L1</span><h3>Modo spring-loaded: ativo só enquanto segura</h3><span class="tag t-l">Loops e modos</span></header>
+ <div class="demo">
+  <button class="hold" type="button"><span class="fill"></span><span class="l l1"><svg class="ic"><use href="#i-reset"/></svg>Segure para reiniciar</span><span class="l l2"><svg class="ic"><use href="#i-check"/></svg>Reiniciado</span></button>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Modo que dura apenas enquanto há ação física (segurar). Soltar volta ao normal, então ninguém fica "preso". O rótulo ensina o gesto.</dd>
+  <dt>Aplicado aqui</dt><dd>Preenchimento de 1,2 s via <code>:active</code> + <code>transition</code>; soltar antes cancela (volta em 0,2 s). Funciona com teclado (Espaço).</dd>
+  <dt class="ev">Evite</dt><dd>Ação destrutiva com um único toque.</dd>
+ </dl>
+</article>
+
+<article class="p" id="l2">
+ <header><span class="id">L2</span><h3>Modo one-off: dura uma única ação</h3><span class="tag t-l">Loops e modos</span></header>
+ <div class="demo">
+  <div class="tools">
+   <div class="tb"><input class="sr" type="radio" name="tool" id="t-ptr" checked><label class="tool" for="t-ptr">Ponteiro</label><input class="sr" type="radio" name="tool" id="t-stp"><label class="tool" for="t-stp">Carimbo (1 uso)</label></div>
+   <label class="canvas" for="t-ptr"><span class="s1">Ponteiro ativo. Escolha o carimbo.</span><span class="s2">Clique na área para aplicar. A ferramenta volta ao ponteiro.</span></label>
+  </div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Modo que se desfaz sozinho após uma ação (ferramenta que volta ao ponteiro, comando de voz com timeout), evitando que o usuário esqueça em que modo está.</dd>
+  <dt>Aplicado aqui</dt><dd>Selecione "Carimbo" e clique na área: o rádio do ponteiro é marcado (<code>label for</code>) e o modo reverte. O carimbo em si não é desenhado.</dd>
+ </dl>
+</article>
+
+<article class="p" id="l3">
+ <header><span class="id">L3</span><h3>Modo com tela própria e estado preservado</h3><span class="tag t-l">Loops e modos</span></header>
+ <div class="demo">
+  <div class="mode">
+   <input class="sr" type="checkbox" id="cfg">
+   <div class="main"><label class="btn sec" for="cfg" style="justify-self:start"><svg class="ic"><use href="#i-sliders"/></svg>Configurações</label><textarea aria-label="Rascunho" placeholder="Digite aqui e abra Configurações: o texto fica preservado."></textarea></div>
+   <div class="scr"><label class="btn ghost" for="cfg" style="justify-self:start"><svg class="ic"><use href="#i-left"/></svg>Voltar</label><label class="sw"><input class="sr" type="checkbox"><span class="trk"></span><span>Modo avançado</span></label></div>
+  </div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Se um modo é inevitável (configuração, rara), dê a ele tela própria, transição de ida e volta, e ao voltar devolva tudo como estava.</dd>
+  <dt>Aplicado aqui</dt><dd>Painel que desliza sobre o conteúdo (<code>translateX</code>); o <code>textarea</code> permanece no DOM, então o rascunho não se perde.</dd>
+  <dt class="ev">Evite</dt><dd>Modo sem saída clara ou que descarta o trabalho.</dd>
+ </dl>
+</article>
+
+<article class="p" id="l4">
+ <header><span class="id">L4</span><h3>Loop por contagem com variável e saída</h3><span class="tag t-l">Loops e modos</span></header>
+ <div class="demo">
+  <div class="rp" style="width:100%">
+   <input class="sr ra" type="radio" name="rt" id="rtA"><input class="sr rb" type="radio" name="rt" id="rtB">
+   <div class="rlog" style="--iv:1.2s" aria-live="polite">
+    <span class="s0">Conectado.</span>
+    <span class="s1"><svg class="ic spin"><use href="#i-loader"/></svg> Tentativa 1 de 3…</span>
+    <span class="s2"><svg class="ic spin"><use href="#i-loader"/></svg> Tentativa 2 de 3…</span>
+    <span class="s3"><svg class="ic spin"><use href="#i-loader"/></svg> Tentativa 3 de 3…</span>
+    <span class="s4" style="color:var(--verm)"><svg class="ic"><use href="#i-cx"/></svg> Sem conexão. Tentamos 3 vezes. <u>Tentar agora</u></span>
+   </div>
+   <label class="btn sec la" for="rtA">Simular queda de rede</label><label class="btn sec lb" for="rtB">Simular de novo</label>
+  </div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Loops têm limite (N tentativas), parâmetros ajustáveis (intervalo) e saída: após esgotar, informe e ofereça a ação manual. Evite loops infinitos.</dd>
+  <dt>Aplicado aqui</dt><dd>Intervalo na variável <code>--iv</code>; cada tentativa tem <code>animation-delay</code> múltiplo de <code>--iv</code>; no fim, mensagem e "Tentar agora". Dois rádios alternados reiniciam a animação sem JS.</dd>
+ </dl>
+</article>
+
+<article class="p" id="l5">
+ <header><span class="id">L5</span><h3>Loop com parâmetros que evoluem (soneca decrescente)</h3><span class="tag t-l">Loops e modos</span></header>
+ <div class="demo col">
+  <div class="snz"><span class="chip">5 min</span><svg class="ic"><use href="#i-right"/></svg><span class="chip">4 min</span><svg class="ic"><use href="#i-right"/></svg><span class="chip">3 min</span><svg class="ic"><use href="#i-right"/></svg><span class="chip">2 min</span><svg class="ic"><use href="#i-right"/></svg><span class="chip">1 min</span><svg class="ic"><use href="#i-right"/></svg><span class="chip">desliga sozinho</span></div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Loops fechados ajustam o próprio ritmo; limite a duração (auto-desligamento) e a quantidade de repetições.</dd>
+  <dt>Aplicado aqui</dt><dd>Sequência visual da regra "soneca − 1 min até o mínimo"; variáveis na ficha R10.</dd>
+ </dl>
+</article>
+
+<article class="p" id="l6">
+ <header><span class="id">L6</span><h3>Detectar hesitação e oferecer ajuda</h3><span class="tag t-l">Loops e modos</span></header>
+ <div class="demo">
+  <div class="rp" style="width:100%">
+   <input class="sr ra" type="radio" name="hs" id="hsA"><input class="sr rb" type="radio" name="hs" id="hsB">
+   <div class="vid" style="--hd:3s"><svg class="ic spin" style="width:1.6rem;height:1.6rem"><use href="#i-loader"/></svg><span class="helpchip">Está lento? Baixar para assistir depois</span></div>
+   <div style="margin-top:.5rem"><label class="btn sec la" for="hsA">Simular vídeo travado</label><label class="btn sec lb" for="hsB">Simular de novo</label></div>
+  </div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Um loop pode medir tempo parado e oferecer ajuda contextual quando o usuário parece travado.</dd>
+  <dt>Aplicado aqui</dt><dd>Após 3 s (<code>--hd</code>) o chip de ajuda entra com <code>animation-delay</code>; a ajuda é opcional, não bloqueia.</dd>
+ </dl>
+</article>
+
+<article class="p" id="l7">
+ <header><span class="id">L7</span><h3>Divulgação e redução progressiva (long loop)</h3><span class="tag t-l">Loops e modos</span></header>
+ <div class="demo">
+  <div class="prog">
+   <div class="seg" role="radiogroup" aria-label="Tempo de uso"><label><input class="sr" type="radio" name="use" id="u1" checked><span>1º uso</span></label><label><input class="sr" type="radio" name="use" id="u2"><span>10º uso</span></label><label><input class="sr" type="radio" name="use" id="u3"><span>100º uso</span></label></div>
+   <div class="stage">
+    <span class="v1 row"><button class="btn pulse" type="button"><svg class="ic"><use href="#i-plus"/></svg>Nova mensagem</button><span class="coach">Dica: você também pode apertar <kbd>N</kbd></span></span>
+    <span class="v2 row"><button class="btn" type="button"><svg class="ic"><use href="#i-plus"/></svg>Nova mensagem <kbd>N</kbd></button></span>
+    <span class="v3 row"><button class="btn iconly" type="button" aria-label="Nova mensagem"><svg class="ic"><use href="#i-plus"/></svg><span class="tip">Nova mensagem · N</span></button></span>
+   </div>
+  </div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Com o uso, a interface revela atalhos (divulgação progressiva) e simplifica o que o usuário já domina (redução progressiva); se ele se afasta, volta a ser explícita.</dd>
+  <dt>Aplicado aqui</dt><dd>Três estágios do mesmo gatilho: com dica, com atalho no rótulo, só ícone com tooltip (<code>:has(#u1:checked)</code> alterna os estágios).</dd>
+ </dl>
+</article>
+
+<article class="p" id="l8">
+ <header><span class="id">L8</span><h3>Long loop: lembrar e retomar</h3><span class="tag t-l">Loops e modos</span></header>
+ <div class="demo col">
+  <div class="box"><b>Continuar de onde parou</b><br><span class="note">Guia de gestão · página 4 · 62%</span><div class="bar" style="margin-top:.4rem"><span style="width:62%"></span></div><button class="btn" type="button" style="margin-top:.6rem">Retomar leitura</button></div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>A microinteração melhora na 2ª e na 1000ª vez: lembra preferências, retoma o ponto e traz novidades aos poucos (Long Wow). "Lembrar de mim" que não lembra quebra o loop.</dd>
+  <dt>Aplicado aqui</dt><dd>Cartão de retomada com progresso. A persistência real exige armazenamento (fora de HTML/CSS).</dd>
+ </dl>
+</article>
+
+</div>
+</section>
+
+<!-- =====================================================  PRÁTICA  -->
+<section id="pratica">
+<h2>5. Orquestração, documentação e testes</h2>
+<p class="lead">Microinterações raramente vivem sozinhas. Esta seção cobre a visão de conjunto.</p>
+<div class="grid">
+
+<article class="p" id="p1">
+ <header><span class="id">P1</span><h3>Orquestração: o fim de uma é o gatilho da próxima</h3><span class="tag t-p">Prática</span></header>
+ <div class="demo col">
+  <div class="flow"><span class="n">Entrar</span><svg class="ic"><use href="#i-right"/></svg><span class="n">Bem-vindo de volta</span><svg class="ic"><use href="#i-right"/></svg><span class="n">Sincronizar</span><svg class="ic"><use href="#i-right"/></svg><span class="n">Pronto</span></div>
+  <table class="tbl"><tr><th>Passagem</th><th>Gatilho da próxima</th></tr><tr><td>Entrar → Boas-vindas</td><td>Login concluído</td></tr><tr><td>Boas-vindas → Sincronizar</td><td>Mensagem encerra</td></tr></table>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Defina a relação de cada microinteração com o recurso (inicia, controla, aparece dentro, encerra) e mantenha um mapa de passagens. Em fluxos no caminho (login), velocidade vence espetáculo.</dd>
+  <dt>Aplicado aqui</dt><dd>Fluxo e tabela de passagens.</dd>
+ </dl>
+</article>
+
+<article class="p" id="p2">
+ <header><span class="id">P2</span><h3>Documentar com quadros-chave</h3><span class="tag t-p">Prática</span></header>
+ <div class="demo col">
+  <div class="sb3">
+   <div class="frame"><b>1 · Gatilho</b><div class="scr"><button class="btn" type="button" style="font-size:.78rem;padding:.3rem .6rem">Enviar</button></div><span>Usuário toca em Enviar.</span></div>
+   <div class="frame"><b>2 · Regra</b><div class="scr"><span><svg class="ic spin"><use href="#i-loader"/></svg> Enviando…</span></div><span>Valida, envia, bloqueia duplo clique.</span></div>
+   <div class="frame"><b>3 · Fim</b><div class="scr"><span style="color:var(--verde)"><svg class="ic"><use href="#i-ccheck"/></svg> Enviado</span></div><span>Confirma e volta ao padrão em 2 s.</span></div>
+  </div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Documente movimento e tempo com protótipo, vídeo ou storyboard. Se só houver telas estáticas, inclua os quadros-chave: gatilho, momento essencial das regras e fim.</dd>
+  <dt>Aplicado aqui</dt><dd>Storyboard de três quadros com legenda do que acontece e por quê.</dd>
+ </dl>
+</article>
+
+<article class="p" id="p3">
+ <header><span class="id">P3</span><h3>Contrato portável: estado por atributo</h3><span class="tag t-p">Prática</span></header>
+ <div class="demo">
+  <button class="ds" data-state="idle" type="button"><svg class="ic i-idle"><use href="#i-send"/></svg>Enviar</button>
+  <button class="ds" data-state="loading" type="button"><svg class="ic i-load"><use href="#i-loader"/></svg>Enviando</button>
+  <button class="ds" data-state="success" type="button"><svg class="ic i-ok"><use href="#i-check"/></svg>Enviado</button>
+  <button class="ds" data-state="error" type="button"><svg class="ic i-err"><use href="#i-x"/></svg>Falhou</button>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Separe o que a microinteração faz de como cada tecnologia a dispara: o CSS responde a <code>data-state</code>; qualquer stack só precisa trocar o atributo.</dd>
+  <dt>Aplicado aqui</dt><dd>Quatro botões estilizados apenas por <code>[data-state="idle|loading|success|error"]</code>, sem classes de estado.</dd>
+ </dl>
+</article>
+
+<article class="p wide" id="p4">
+ <header><span class="id">P4</span><h3>Testar: sinais observáveis e causa provável</h3><span class="tag t-p">Prática</span></header>
+ <div class="demo col">
+  <table class="tbl">
+   <tr><th>O que a pessoa diz ou faz</th><th>Causa provável</th><th>Parte</th></tr>
+   <tr><td>"O que acabou de acontecer?"</td><td>Feedback pouco claro</td><td>Feedback</td></tr>
+   <tr><td>"Aconteceu algo?"</td><td>Feedback ausente ou sutil demais</td><td>Feedback</td></tr>
+   <tr><td>"Não acho"</td><td>Rótulo ruim ou gatilho ausente</td><td>Gatilho</td></tr>
+   <tr><td>"Onde estou?"</td><td>Transição ou modo mal sinalizado</td><td>Modos</td></tr>
+   <tr><td>"Não vi o botão"</td><td>Hierarquia visual fraca</td><td>Gatilho</td></tr>
+   <tr><td>"Não sabia que dava"</td><td>Gatilho escondido</td><td>Gatilho</td></tr>
+   <tr><td>"O que faço agora?"</td><td>Próximo passo pouco claro</td><td>Feedback / regras</td></tr>
+  </table>
+  <table class="tbl">
+   <tr><th>Métrica</th><th>Uso</th></tr>
+   <tr><td>Taxa de conclusão; duração total e por passo; nº de passos/cliques</td><td>Eficiência</td></tr>
+   <tr><td>Erros do sistema; erros humanos (deslizes x equívocos)</td><td>Qualidade das regras</td></tr>
+   <tr><td>Notas de satisfação, dificuldade, confiança e utilidade</td><td>Percepção</td></tr>
+  </table>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Teste com protótipo de alta fidelidade (gatilho, regras, feedback e loops são inseparáveis). Qualitativo acha o terrível e o ótimo; nuances pedem amostra grande e A/B. Dados informam, não decidem.</dd>
+  <dt>Aplicado aqui</dt><dd>Tabelas de diagnóstico e métricas. Para reduzir outliers em tempo, use média geométrica.</dd>
+ </dl>
+</article>
+
+</div>
+</section>
+
+<!-- =====================================================  EXEMPLOS  -->
+<section id="exemplos">
+<h2>6. Exemplos aplicados</h2>
+<p class="lead">Composição de várias práticas em um mesmo componente.</p>
+<div class="grid">
+
+<article class="p" id="e1">
+ <header><span class="id">E1</span><h3>Painel de lava-louças (hardware sem tela)</h3><span class="tag t-p">Exemplo</span></header>
+ <div class="demo">
+  <div class="dw">
+   <div class="dwsel" role="radiogroup" aria-label="Estado do equipamento">
+    <input class="sr" type="radio" name="dw" id="dw1" checked><label for="dw1">Desligada</label>
+    <input class="sr" type="radio" name="dw" id="dw2"><label for="dw2">Pronta</label>
+    <input class="sr" type="radio" name="dw" id="dw3"><label for="dw3">Em operação</label>
+    <input class="sr" type="radio" name="dw" id="dw4"><label for="dw4">Limpa</label>
+   </div>
+   <div class="panel">
+    <div class="leds" aria-label="Tempo restante"><i></i><i></i><i></i><i></i><i></i><span>tempo</span></div>
+    <button class="sb" type="button">
+     <span class="s-off">Desligada</span>
+     <span class="s-rdy"><svg class="ic"><use href="#i-play"/></svg>Iniciar</span>
+     <span class="s-run"><svg class="ic spin"><use href="#i-loader"/></svg>Em operação</span>
+     <span class="s-ok"><svg class="ic"><use href="#i-check"/></svg>Limpa</span>
+    </button>
+   </div>
+  </div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Estados do gatilho comunicados por mais de um canal: cor + texto + ícone + movimento. Traga o dado que importa (tempo restante) ao próprio painel.</dd>
+  <dt>Aplicado aqui</dt><dd>Escolha um estado: "Pronta" pulsa (convite), "Em operação" acende as barras de tempo, "Limpa" fica verde com ✓. Cores distinguíveis também por texto e ícone (daltonismo).</dd>
+ </dl>
+</article>
+
+<article class="p" id="e2">
+ <header><span class="id">E2</span><h3>Alarme: dado a mais para prevenir erro</h3><span class="tag t-p">Exemplo</span></header>
+ <div class="demo col">
+  <div class="row"><label class="fld">Hora<input type="time" value="07:00"></label><span class="chip"><svg class="ic"><use href="#i-bell"/></svg>Toca em 8 h</span></div>
+  <span class="sugg"><svg class="ic"><use href="#i-check"/></svg>Sugerido: você definiu este horário nos últimos 3 dias</span>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Traga a informação que previne o erro (tempo até tocar evita confundir AM/PM) e use histórico para sugerir. Valores ilustrativos.</dd>
+  <dt>Aplicado aqui</dt><dd><code>input type="time"</code> nativo + chip relativo + sugestão com a origem do padrão.</dd>
+ </dl>
+</article>
+
+</div>
+</section>
+
+<!-- =====================================================  CHECKLIST  -->
+<section id="checklist">
+<h2>7. Checklist de auditoria</h2>
+<p class="lead">Marque durante a análise. Cada item vira uma pergunta sobre uma microinteração real.</p>
+<div class="p">
+ <header><span class="id">CK</span><h3>Auditoria rápida</h3><span class="tag t-p">Checklist</span></header>
+ <div class="demo" style="display:block">
+  <div class="ckgrid">
+   <div><h4>Gatilho</h4><div class="ck">
+    <label><input type="checkbox"><span>Visibilidade proporcional à frequência de uso?</span></label>
+    <label><input type="checkbox"><span>Mesma ação em todo disparo, sem affordance falsa?</span></label>
+    <label><input type="checkbox"><span>Mostra um dado útil antes do clique?</span></label>
+    <label><input type="checkbox"><span>Rótulo específico, consistente, só onde há ambiguidade?</span></label>
+    <label><input type="checkbox"><span>Gatilho do sistema pode ser ajustado e tem versão manual?</span></label></div></div>
+   <div><h4>Regras</h4><div class="ck">
+    <label><input type="checkbox"><span>Objetivo = estado final, em uma frase?</span></label>
+    <label><input type="checkbox"><span>Regras explicáveis em poucas linhas?</span></label>
+    <label><input type="checkbox"><span>Usa contexto e histórico (não começa do zero)?</span></label>
+    <label><input type="checkbox"><span>Poucas opções, padrão inteligente e visível?</span></label>
+    <label><input type="checkbox"><span>Erros evitados pelo desenho; mensagem só em falha do sistema?</span></label>
+    <label><input type="checkbox"><span>Estados de cada objeto definidos?</span></label></div></div>
+   <div><h4>Feedback</h4><div class="ck">
+    <label><input type="checkbox"><span>Toda ação confirmada, perto do ponto de ação?</span></label>
+    <label><input type="checkbox"><span>Mínimo de canais para a importância?</span></label>
+    <label><input type="checkbox"><span>Animação com propósito, curta, suave e coerente?</span></label>
+    <label><input type="checkbox"><span>Erro diz o que houve e como corrigir, sem acusar?</span></label>
+    <label><input type="checkbox"><span>Som passa no teste da buzina e pode ser desligado?</span></label>
+    <label><input type="checkbox"><span>Respeita prefers-reduced-motion e não depende só de cor?</span></label></div></div>
+   <div><h4>Loops e modos</h4><div class="ck">
+    <label><input type="checkbox"><span>Zero ou um modo, com tela/transição própria?</span></label>
+    <label><input type="checkbox"><span>Spring-loaded ou one-off quando possível?</span></label>
+    <label><input type="checkbox"><span>Nenhum loop sem fim ou sem saída; timeouts definidos?</span></label>
+    <label><input type="checkbox"><span>Há memória/adaptação para a 2ª e a 100ª vez?</span></label></div></div>
+  </div>
+ </div>
+ <dl class="spec">
+  <dt>Prática</dt><dd>Auditar cada microinteração pelas quatro partes antes de entregar.</dd>
+  <dt>Aplicado aqui</dt><dd>Checkboxes nativos; <code>input:checked + span</code> risca o item concluído.</dd>
+ </dl>
+</div>
+</section>
+
+<p class="note" style="margin-top:2rem">Conteúdo baseado nos conceitos de <i>Microinteractions</i> (Dan Saffer, O'Reilly, 2013), reescrito de forma original.</p>
+</main>
+</body>
+</html>
